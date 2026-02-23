@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>montato. — drop 01</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="stage" id="stage">
+    <div class="halo" id="halo" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="gyro" id="gyroWrap">
+      <button id="gyroBtn" type="button">attiva movimento</button>
+    </div>
+
+    <div class="top">
+      <div class="logo">montato<span class="dot">.</span></div>
+      <div class="meta" id="metaLine">drop 01</div>
+    </div>
+
+    <!-- MAIN SPLIT: left carousel / right countdown -->
+    <div class="main">
+      <!-- LEFT: vertical carousel -->
+      <div class="vhero" aria-label="carosello frasi">
+        <div class="vviewport" id="vviewport">
+          <div class="vtrack" id="vtrack"></div>
+          <div class="vcenter" aria-hidden="true"></div>
+        </div>
+
+        <div class="vmini">
+          <div class="vminiBrand">montato.</div>
+          <div class="vminiDrop">mnt — drop 01</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: countdown (as before) -->
+      <div class="count" id="countBlock">
+        <div class="countLine" id="cd1">--D --H</div>
+        <div class="countLine" id="cd2">--M --S</div>
+        <div class="countSmall" id="targetLine">giovedì prossimo · 18:00</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
