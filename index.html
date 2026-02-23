@@ -21,15 +21,14 @@
       <button id="gyroBtn" type="button">attiva movimento</button>
     </div>
 
-    <div class="top">
+    <header class="top">
       <div class="logo">montato<span class="dot">.</span></div>
       <div class="meta" id="metaLine">drop 01</div>
-    </div>
+    </header>
 
-    <!-- MAIN SPLIT: left carousel / right countdown -->
-    <div class="main">
+    <main class="main">
       <!-- LEFT: vertical carousel -->
-      <div class="vhero" aria-label="carosello frasi">
+      <section class="vhero" aria-label="carosello frasi">
         <div class="vviewport" id="vviewport">
           <div class="vtrack" id="vtrack"></div>
           <div class="vcenter" aria-hidden="true"></div>
@@ -39,15 +38,27 @@
           <div class="vminiBrand">montato.</div>
           <div class="vminiDrop">mnt — drop 01</div>
         </div>
-      </div>
+      </section>
 
-      <!-- RIGHT: countdown (as before) -->
-      <div class="count" id="countBlock">
-        <div class="countLine" id="cd1">--D --H</div>
-        <div class="countLine" id="cd2">--M --S</div>
-        <div class="countSmall" id="targetLine">giovedì prossimo · 18:00</div>
-      </div>
-    </div>
+      <!-- RIGHT: countdown -->
+      <aside class="right">
+        <div class="count" id="countBlock">
+          <div class="countLine" id="cd1">--D --H</div>
+          <div class="countLine" id="cd2">--M --S</div>
+          <div class="countSmall" id="targetLine">giovedì prossimo · 18:00</div>
+        </div>
+
+        <div class="rightMini">
+          <div class="tag">non è per tutti.</div>
+          <div class="tag">se ti spieghiamo, non fa per te.</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="bottom">
+      <div class="link" id="copyDate">copia data</div>
+      <div class="link">summer capsule</div>
+    </footer>
   </div>
 
   <script src="app.js" defer></script>

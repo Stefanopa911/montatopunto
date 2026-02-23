@@ -38,17 +38,19 @@ on(document, "mousemove", (e) => {
   cursor.style.top  = e.clientY + "px";
 });
 
-/* data */
+/* phrases (5) */
 const presets = [
   { a:"sopra la", b:"media", c:"senza sforzo", accent:"sforzo" },
-  { a:"zero rumore", b:"presenza", c:"tutto è chiaro", accent:"chiaro" },
-  { a:"stesso sole", b:"altra aura", c:"nessuna spiegazione", accent:"spiegazione" },
-  { a:"estate addosso", b:"sempre", c:"anche quando piove", accent:"sempre" },
-  { a:"non inseguo", b:"arriva", c:"chi mi capisce", accent:"arriva" }
+  { a:"la proprietà è", b:"un concetto,", c:"il controllo è un’arte", accent:"arte" },
+  { a:"stesso sole", b:"altra aura", c:"nessuna spiegazione", accent:"spiegazione" }, // secret
+  { a:"non è per", b:"tutti.", c:"se ti spieghiamo, non fa per te", accent:"tutti" },
+  { a:"zero rumore", b:"presenza", c:"arriva.", accent:"arriva" }
 ];
+const SECRET_INDEX = 2;
 
 /* drop meta + countdown target */
 const TARGET_HOUR = 18, TARGET_MIN = 0;
+
 function getNextThursday(now = new Date()){
   const THU = 4;
   let daysAhead = (THU - now.getDay() + 7) % 7;
@@ -59,19 +61,22 @@ function getNextThursday(now = new Date()){
   return t;
 }
 const target = getNextThursday();
+
 const pretty = new Intl.DateTimeFormat("it-IT", {
   weekday:"long", day:"2-digit", month:"long", hour:"2-digit", minute:"2-digit"
 }).format(target);
+
 if(metaLine) metaLine.textContent = `drop 01 — ${pretty}`;
+if(targetLine) targetLine.textContent = `giovedì prossimo · ${String(TARGET_HOUR).padStart(2,"0")}:${String(TARGET_MIN).padStart(2,"0")}`;
 
 function pad(n){ return String(n).padStart(2,"0"); }
 function tick(){
   const now = new Date();
   const diff = target - now;
   if(diff <= 0){
-    if(cd1) cd1.textContent = "LIVE";
-    if(cd2) cd2.textContent = "NOW";
-    if(targetLine) targetLine.textContent = "drop 01 · live";
+    cd1.textContent = "LIVE";
+    cd2.textContent = "NOW";
+    targetLine.textContent = "drop 01 · live";
     return;
   }
   const total = Math.floor(diff/1000);
@@ -79,13 +84,14 @@ function tick(){
   const h = Math.floor((total%86400)/3600);
   const m = Math.floor((total%3600)/60);
   const s = total%60;
-  if(cd1) cd1.textContent = `${pad(d)}D ${pad(h)}H`;
-  if(cd2) cd2.textContent = `${pad(m)}M ${pad(s)}S`;
+
+  cd1.textContent = `${pad(d)}D ${pad(h)}H`;
+  cd2.textContent = `${pad(m)}M ${pad(s)}S`;
 }
 tick();
 setInterval(tick, 200);
 
-/* pastel */
+/* pastel subtle loop */
 const pastelColors = ["#5FA6C7","#A8D8EA","#F7C8E0","#D8B4F8","#B9F3E4","#FFD6A5","#CDEAC0"];
 function hexToRgb(hex){
   const h = hex.replace("#","");
@@ -113,81 +119,83 @@ function bump(amount){
 }
 function pastelLoop(){
   boost *= 0.92;
-  baseT += 0.0022 + boost * 0.01;
+  baseT += 0.0019 + boost * 0.01;
   if(baseT >= 1){
     baseT = 0;
     baseIndex = (baseIndex + 1) % pastelColors.length;
   }
-  const a = pastelColors[baseIndex];
-  const b = pastelColors[(baseIndex + 1) % pastelColors.length];
-  setPastel(mixHex(a,b,baseT));
+  setPastel(mixHex(pastelColors[baseIndex], pastelColors[(baseIndex+1)%pastelColors.length], baseT));
   requestAnimationFrame(pastelLoop);
 }
 requestAnimationFrame(pastelLoop);
 
-/* parallax: moves halo + subtle count drift */
-let raf=null, last={x:innerWidth/2,y:innerHeight/2};
+/* interactivity: parallax mouse + gyro */
+let raf=null;
+let last={ x: innerWidth/2, y: innerHeight/2 };
+
 function applyParallax(nx, ny){
-  // halo
-  if(halo){
-    const cx = innerWidth/2 + nx * 160;
-    const cy = innerHeight/2 + ny * 120;
-    halo.style.left = cx + "px";
-    halo.style.top  = cy + "px";
-  }
-  // count drift
+  const cx = innerWidth/2 + nx * 160;
+  const cy = innerHeight/2 + ny * 120;
+  halo.style.left = cx + "px";
+  halo.style.top  = cy + "px";
+
   if(countBlock){
     countBlock.style.setProperty("--tx", (nx*26).toFixed(2) + "px");
     countBlock.style.setProperty("--ty", (ny*18).toFixed(2) + "px");
   }
 }
+
 on(stage, "mousemove", (e)=>{
-  last.x=e.clientX; last.y=e.clientY;
+  last.x = e.clientX; last.y = e.clientY;
   bump(0.04);
   if(raf) return;
   raf = requestAnimationFrame(()=>{
-    const cx=innerWidth/2, cy=innerHeight/2;
+    const cx = innerWidth/2, cy = innerHeight/2;
     applyParallax((last.x-cx)/cx, (last.y-cy)/cy);
     raf=null;
   });
 });
 
-/* gyroscope */
+/* gyro */
 const gyroWrap = $("gyroWrap");
 const gyroBtn  = $("gyroBtn");
+
 function isMobile(){ return matchMedia("(max-width: 960px)").matches; }
 function hasDeviceOrientation(){ return typeof DeviceOrientationEvent !== "undefined"; }
+
 let sx=0, sy=0;
 function handleOrientation(e){
   const g = (e.gamma ?? 0);
   const b = (e.beta  ?? 0);
   const nx = clamp(g/25, -1, 1);
   const ny = clamp((b-10)/25, -1, 1);
-  sx += (nx - sx)*0.12;
-  sy += (ny - sy)*0.12;
+  sx += (nx - sx) * 0.12;
+  sy += (ny - sy) * 0.12;
   bump(0.03);
   applyParallax(sx, sy);
 }
+
 async function enableGyro(){
   if(!hasDeviceOrientation()) return;
   if(typeof DeviceOrientationEvent.requestPermission === "function"){
     try{
       const res = await DeviceOrientationEvent.requestPermission();
       if(res !== "granted") return;
-    }catch(e){ return; }
+    }catch(_){ return; }
   }
   window.addEventListener("deviceorientation", handleOrientation, true);
-  if(gyroBtn){
-    gyroBtn.textContent = "movimento attivo";
-    gyroBtn.disabled = true;
-    gyroBtn.style.opacity = ".6";
+  gyroBtn.textContent = "movimento attivo";
+  gyroBtn.disabled = true;
+  gyroBtn.style.opacity = ".6";
+}
+
+(function initGyroUI(){
+  if(isMobile() && hasDeviceOrientation()){
+    gyroWrap.style.display = "block";
+  }else{
+    gyroWrap.style.display = "none";
   }
-}
-if(isMobile() && hasDeviceOrientation()){
-  if(gyroWrap) gyroWrap.style.display = "block";
-} else {
-  if(gyroWrap) gyroWrap.style.display = "none";
-}
+})();
 on(gyroBtn, "click", enableGyro);
 
 /* =========================
@@ -199,59 +207,6 @@ let isDown = false;
 let lastY = 0;
 let seqHeight = 0;
 
-function buildCarousel(){
-  if(!vtrack) return;
-  vtrack.innerHTML = "";
-
-  const seq = document.createElement("div");
-  seq.style.display = "flex";
-  seq.style.flexDirection = "column";
-  seq.style.gap = "46px";
-
-  presets.forEach((p,i)=>{
-    const el = document.createElement("div");
-    el.className = "vitem";
-    el.dataset.index = String(i);
-
-    const parts = p.accent && p.c.toLowerCase().includes(p.accent.toLowerCase())
-      ? splitOnceCaseInsensitive(p.c, p.accent)
-      : [p.c,"",""];
-
-    const cHtml = parts[1]
-      ? `${escapeHtml(parts[0])}<span class="vGlow">${escapeHtml(parts[1])}</span>${escapeHtml(parts[2])}`
-      : escapeHtml(p.c);
-
-    el.innerHTML = `
-      <div class="vA">${escapeHtml(p.a)}</div>
-      <div class="vB">${escapeHtml(p.b)}</div>
-      <div class="vC">${cHtml}</div>
-    `;
-
-    on(el, "click", ()=> { snapToIndex(i); bump(0.16); });
-    seq.appendChild(el);
-  });
-
-  const seq2 = seq.cloneNode(true);
-  seq2.querySelectorAll(".vitem").forEach((n)=>{
-    const i = Number(n.dataset.index);
-    on(n, "click", ()=> { snapToIndex(i); bump(0.16); });
-  });
-
-  vtrack.appendChild(seq);
-  vtrack.appendChild(seq2);
-
-  requestAnimationFrame(()=>{
-    seqHeight = seq.getBoundingClientRect().height;
-    y = 0;
-    applyY();
-    setActive(0);
-	kickActiveAnimation();
-    updatePresence();
-  });
-}
-
-function applyY(){ vtrack.style.transform = `translate3d(0,${y}px,0)`; }
-
 function setActive(i){
   activeIndex = clamp(i, 0, presets.length - 1);
   vtrack.querySelectorAll(".vitem").forEach((n)=>{
@@ -259,8 +214,22 @@ function setActive(i){
   });
 }
 
+function kickActiveAnimation(){
+  const activeEl = [...vtrack.querySelectorAll(".vitem")]
+    .find(n => n.classList.contains("is-active"));
+  if(!activeEl) return;
+
+  activeEl.classList.remove("kick");
+  void activeEl.offsetWidth;
+  activeEl.classList.add("kick");
+
+  clearTimeout(kickActiveAnimation._t);
+  kickActiveAnimation._t = setTimeout(()=> activeEl.classList.remove("kick"), 720);
+}
+
+function applyY(){ vtrack.style.transform = `translate3d(0,${y}px,0)`; }
+
 function updatePresence(){
-  if(!vviewport || !vtrack) return;
   const vr = vviewport.getBoundingClientRect();
   const centerY = vr.top + vr.height/2;
 
@@ -287,7 +256,6 @@ function nearestIndexToCenter(){
     const idx = Number(el.dataset.index);
     if(d < best.d){ best = { i: idx, d }; }
   });
-
   return best.i;
 }
 
@@ -295,7 +263,7 @@ function snapToIndex(i){
   setActive(i);
 
   const targetEl = [...vtrack.querySelectorAll(".vitem")].find(n => Number(n.dataset.index) === i);
-  if(!targetEl || !vviewport) return;
+  if(!targetEl) return;
 
   const vr = vviewport.getBoundingClientRect();
   const centerY = vr.top + vr.height/2;
@@ -306,10 +274,61 @@ function snapToIndex(i){
   y += (centerY - mid);
   applyY();
   updatePresence();
-
-  kickActiveAnimation();   // ✅ NEW: blur→sharp + snap
+  kickActiveAnimation();
+  bump(0.14);
 }
 
+function buildCarousel(){
+  vtrack.innerHTML = "";
+
+  const seq = document.createElement("div");
+  seq.style.display = "flex";
+  seq.style.flexDirection = "column";
+  seq.style.gap = "50px";
+
+  presets.forEach((p,i)=>{
+    const el = document.createElement("div");
+    el.className = "vitem";
+    el.dataset.index = String(i);
+
+    if(i === SECRET_INDEX) el.classList.add("is-secret");
+
+    const parts = p.accent && p.c.toLowerCase().includes(p.accent.toLowerCase())
+      ? splitOnceCaseInsensitive(p.c, p.accent)
+      : [p.c,"",""];
+
+    const cHtml = parts[1]
+      ? `${escapeHtml(parts[0])}<span class="vGlow">${escapeHtml(parts[1])}</span>${escapeHtml(parts[2])}`
+      : escapeHtml(p.c);
+
+    el.innerHTML = `
+      <div class="vA">${escapeHtml(p.a)}</div>
+      <div class="vB">${escapeHtml(p.b)}</div>
+      <div class="vC">${cHtml}</div>
+    `;
+
+    on(el, "click", ()=> snapToIndex(i));
+    seq.appendChild(el);
+  });
+
+  const seq2 = seq.cloneNode(true);
+  seq2.querySelectorAll(".vitem").forEach((n)=>{
+    const idx = Number(n.dataset.index);
+    on(n, "click", ()=> snapToIndex(idx));
+  });
+
+  vtrack.appendChild(seq);
+  vtrack.appendChild(seq2);
+
+  requestAnimationFrame(()=>{
+    seqHeight = seq.getBoundingClientRect().height;
+    y = 0;
+    applyY();
+    setActive(0);
+    updatePresence();
+    kickActiveAnimation();
+  });
+}
 
 /* drag */
 on(vviewport, "pointerdown", (e)=>{
@@ -343,10 +362,10 @@ on(vviewport, "wheel", (e)=>{
   bump(0.03);
 
   clearTimeout(endDrag._t);
-  endDrag._t = setTimeout(()=> snapToIndex(nearestIndexToCenter()), 120);
+  endDrag._t = setTimeout(()=> snapToIndex(nearestIndexToCenter()), 130);
 }, { passive:false });
 
-/* keep y bounded (infinite wrap) */
+/* infinite wrap */
 function wrapLoop(){
   if(seqHeight > 0){
     if(y <= -seqHeight) y += seqHeight;
@@ -355,26 +374,25 @@ function wrapLoop(){
   }
   requestAnimationFrame(wrapLoop);
 }
-function kickActiveAnimation(){
-  if(!vtrack) return;
 
-  // prendi il primo elemento attivo (la prima occorrenza)
-  const activeEl = [...vtrack.querySelectorAll(".vitem")]
-    .find(n => n.classList.contains("is-active"));
-
-  if(!activeEl) return;
-
-  // reset animazione
-  activeEl.classList.remove("kick");
-  // force reflow (riavvia l’animazione)
-  void activeEl.offsetWidth;
-  activeEl.classList.add("kick");
-
-  clearTimeout(kickActiveAnimation._t);
-  kickActiveAnimation._t = setTimeout(()=> activeEl.classList.remove("kick"), 720);
-}
-
+/* copy date */
+on($("copyDate"), "click", async () => {
+  const text = `montato. drop 01 — ${pretty}`;
+  try{
+    await navigator.clipboard.writeText(text);
+    const el = $("copyDate");
+    const prev = el.textContent;
+    el.textContent = "copiato";
+    setTimeout(()=> el.textContent = prev, 900);
+  }catch(_){
+    alert(text);
+  }
+});
 
 /* init */
 buildCarousel();
 requestAnimationFrame(wrapLoop);
+
+on(window, "resize", ()=>{
+  last = { x: innerWidth/2, y: innerHeight/2 };
+});
